@@ -158,7 +158,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut token = String::new();
     let mut domains: Vec<String> = vec![];
     let mut ip4_domains: Vec<String> = vec![];
-    let mut cache_expiration = Duration::from_mins(2);
+    let mut cache_expiration = Duration::from_hours(6);
     let mut update_cron: Cron = Cron::from_str("* * * * *")?;
 
     for (key, val) in env::vars() {
