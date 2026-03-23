@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::token::{TokenStatus, get_token_status};
 use chrono::{DateTime, Local, TimeDelta};
 use cloudflare::{
     endpoints::{
@@ -30,6 +31,8 @@ use cloudflare::{
 };
 use croner::Cron;
 use std::{env, error::Error, net::Ipv4Addr, str::FromStr, thread::sleep, time::Duration};
+
+mod token;
 
 fn get_ip4() -> Ipv4Addr {
     let ip4_raw = reqwest::blocking::get("https://checkip.amazonaws.com/")
@@ -123,7 +126,13 @@ impl App {
             for record in records {
                 if self.ip4_domains.contains(&record.name) {
                     self.update_ip4_record(&zone, &record);
-                } else if self.machine_id != String::new() && record.comment.clone().unwrap().contains(format!("DDNS_ID={}", &self.machine_id).as_str()) {
+                } else if self.machine_id != String::new()
+                    && record
+                        .comment
+                        .clone()
+                        .unwrap()
+                        .contains(format!("DDNS_ID={}", &self.machine_id).as_str())
+                {
                     self.update_ip4_record(&zone, &record);
                 }
             }
@@ -188,6 +197,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     if token == String::new() {
         panic!("could not find CLOUDFLARE_API_TOKEN variable in envirenment");
     }
+
+    match get_token_status(&token) {
+        TokenStatus::Active => {}
+        TokenStatus::Disabled => {
+            panic!("the CLOUDFLARE_API_TOKEN used is disabled");
+        }
+        TokenStatus::Expired => {
+            panic!("the CLOUDFLARE_API_TOKEN used is expired");
+        }
+        TokenStatus::Missing => {
+            panic!("the CLOUDFLARE_API_TOKEN used is missing");
+        }
+    };
 
     let credentials = Credentials::UserAuthToken {
         token: token.clone(),
