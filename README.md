@@ -8,3 +8,9 @@ server itself and the Cloudflare Dashboard in the DNS entry comments.
 - [ ] Documentation
 - [ ] IPv6 Support
 - [ ] Docker Image
+- [ ] API Token Verification
+- [ ] More Configuration Options
+- [ ] Improved Logging
+- [ ] Improved Error Handling
+- [ ] Error Notifications
+- [ ] Token Expiration Warnings
