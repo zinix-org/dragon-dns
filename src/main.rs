@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use crate::token::{TokenStatus, get_token_status};
+use crate::token::verify_token;
 use chrono::{DateTime, Local, TimeDelta};
 use cloudflare::{
     endpoints::{
@@ -198,18 +198,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         panic!("could not find CLOUDFLARE_API_TOKEN variable in envirenment");
     }
 
-    match get_token_status(&token) {
-        TokenStatus::Active => {}
-        TokenStatus::Disabled => {
-            panic!("the CLOUDFLARE_API_TOKEN used is disabled");
-        }
-        TokenStatus::Expired => {
-            panic!("the CLOUDFLARE_API_TOKEN used is expired");
-        }
-        TokenStatus::Missing => {
-            panic!("the CLOUDFLARE_API_TOKEN used is missing");
-        }
-    };
+    verify_token(&token);
 
     let credentials = Credentials::UserAuthToken {
         token: token.clone(),

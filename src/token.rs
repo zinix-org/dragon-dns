@@ -17,13 +17,6 @@
 use reqwest::header::AUTHORIZATION;
 use serde::Deserialize;
 
-pub enum TokenStatus {
-    Active,
-    Disabled,
-    Expired,
-    Missing,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct TokenVerificationResult {
     status: String,
@@ -35,7 +28,7 @@ pub struct TokenVerificationResponse {
     success: bool,
 }
 
-pub fn get_token_status(token: &str) -> TokenStatus {
+pub fn verify_token(token: &str) {
     let client = reqwest::blocking::Client::new();
     let res_raw = client
         .get("https://api.cloudflare.com/client/v4/user/tokens/verify")
@@ -48,13 +41,19 @@ pub fn get_token_status(token: &str) -> TokenStatus {
         serde_json::from_str(&res_raw).expect("failed to parse JSON");
 
     if res.result.is_none() {
-        return TokenStatus::Missing;
+        panic!("the CLOUDFLARE_API_TOKEN used is not valid");
     }
 
     match res.result.unwrap().status.as_str() {
-        "active" => TokenStatus::Active,
-        "disabled" => TokenStatus::Disabled,
-        "expired" => TokenStatus::Expired,
-        _ => TokenStatus::Missing,
+        "active" => {}
+        "disabled" => {
+            panic!("the CLOUDFLARE_API_TOKEN used is disabled");
+        }
+        "expired" => {
+            panic!("the CLOUDFLARE_API_TOKEN used is expired");
+        }
+        _ => {
+            panic!("the CLOUDFLARE_API_TOKEN used is not valid");
+        }
     }
 }
