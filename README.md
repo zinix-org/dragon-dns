@@ -8,7 +8,7 @@ server itself and the Cloudflare Dashboard in the DNS entry comments.
 - [ ] Documentation
 - [ ] IPv6 Support
 - [ ] Docker Image
-- [ ] API Token Verification
+- [x] API Token Verification
 - [ ] More Configuration Options
 - [ ] Improved Logging
 - [ ] Improved Error Handling
