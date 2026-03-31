@@ -30,8 +30,17 @@ use cloudflare::{
     },
 };
 use croner::Cron;
-use std::{env, error::Error, net::Ipv4Addr, str::FromStr, thread::sleep, time::Duration};
+use std::{
+    env,
+    error::Error,
+    net::Ipv4Addr,
+    panic::{self, PanicHookInfo},
+    str::FromStr,
+    thread::{self, sleep},
+    time::Duration,
+};
 
+mod logger;
 mod token;
 
 fn get_ip4() -> Ipv4Addr {
@@ -110,7 +119,7 @@ impl App {
             if ip4 != self.cached_ip4
                 || now - self.cached_last_time > TimeDelta::from_std(self.cache_expiration)?
             {
-                println!("updating records. IPv4: {}, time: {}", ip4, now);
+                log::info!("updating records. IPv4: {}, time: {}", ip4, now);
                 self.cached_ip4 = ip4;
                 self.cached_last_time = now;
                 self.update_records()?;
@@ -165,8 +174,18 @@ impl App {
     }
 }
 
+fn panic_hook(info: &PanicHookInfo) {
+    log::error!("{}", info.payload_as_str().unwrap());
+    loop {
+        thread::park();
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     dotenvy::dotenv()?;
+    logger::init()?;
+    panic::set_hook(Box::new(panic_hook));
+
     let mut token = String::new();
     let mut domains: Vec<String> = vec![];
     let mut ip4_domains: Vec<String> = vec![];
@@ -190,12 +209,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             "UPDATE_CRON" => update_cron = Cron::from_str(&key)?,
             "MACHINE_ID" => machine_id = val.clone(),
+            "LOG_LEVEL" => logger::set_level(match val.to_lowercase().as_str() {
+                "error" => log::Level::Error,
+                "warn" => log::Level::Warn,
+                "info" => log::Level::Info,
+                "debug" => log::Level::Debug,
+                "trace" => log::Level::Trace,
+                _ => log::Level::Debug,
+            })?,
             _ => {}
         }
     }
 
     if token == String::new() {
-        panic!("could not find CLOUDFLARE_API_TOKEN variable in envirenment");
+        panic!("could not find CLOUDFLARE_API_TOKEN variable in environment");
     }
 
     verify_token(&token);
