@@ -133,14 +133,13 @@ impl App {
         for zone in zones {
             let records = list_records(&self.api_client, &zone.id);
             for record in records {
-                if self.ip4_domains.contains(&record.name) {
-                    self.update_ip4_record(&zone, &record);
-                } else if self.machine_id != String::new()
-                    && record
-                        .comment
-                        .clone()
-                        .unwrap()
-                        .contains(format!("DDNS_ID={}", &self.machine_id).as_str())
+                if self.ip4_domains.contains(&record.name)
+                    || (self.machine_id != String::new()
+                        && record
+                            .comment
+                            .clone()
+                            .unwrap()
+                            .contains(format!("DDNS_ID={}", &self.machine_id).as_str()))
                 {
                     self.update_ip4_record(&zone, &record);
                 }

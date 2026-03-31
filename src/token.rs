@@ -25,7 +25,6 @@ pub struct TokenVerificationResult {
 #[derive(Debug, Deserialize)]
 pub struct TokenVerificationResponse {
     result: Option<TokenVerificationResult>,
-    success: bool,
 }
 
 pub fn verify_token(token: &str) {
