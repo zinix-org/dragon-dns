@@ -35,6 +35,7 @@ use std::{
     error::Error,
     net::Ipv4Addr,
     panic::{self, PanicHookInfo},
+    path::Path,
     str::FromStr,
     thread::{self, sleep},
     time::Duration,
@@ -181,7 +182,9 @@ fn panic_hook(info: &PanicHookInfo) {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    dotenvy::dotenv()?;
+    if Path::new(".env").exists() {
+        dotenvy::dotenv()?;
+    }
     logger::init()?;
     panic::set_hook(Box::new(panic_hook));
 
@@ -221,7 +224,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     if token.is_empty() {
-        return Err("could not find CLOUDFLARE_API_TOKEN variable in environment".into());
+        panic!("could not find CLOUDFLARE_API_TOKEN variable in environment");
     }
 
     verify_token(&token)?;
