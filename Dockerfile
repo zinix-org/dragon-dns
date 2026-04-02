@@ -15,4 +15,4 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/dragon-dns /ddns
-CMD ["/ddns"]
+ENTRYPOINT ["/ddns"]
