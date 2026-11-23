@@ -19,10 +19,10 @@ use cloudflare::{
         client::{ClientConfig as CloudflareConfig, async_api::Client as CloudflareClient},
     },
 };
-use color_eyre::Result;
-use std::net::Ipv4Addr;
+use color_eyre::{Result, eyre::bail};
+use std::{net::Ipv4Addr, time::Duration};
 use tokio::time::sleep;
-use tracing::{debug, info, trace};
+use tracing::{debug, error, info, trace};
 
 pub struct App {
     api_client: CloudflareClient,
@@ -61,7 +61,14 @@ impl App {
             let now = Local::now();
             let next = self.config.update_cron.find_next_occurrence(&now, false)?;
 
-            let ip4 = get_ip4().await?;
+            let ip4 = match get_ip4().await {
+                Ok(ipv4) => ipv4,
+                Err(e) => {
+                    error!("failed to fetch ipv4 address! waiting 2 minutes for next check...");
+                    sleep(Duration::from_mins(2)).await;
+                    continue;
+                }
+            };
 
             let ip_changed = ip4 != self.cached_ip4;
             let cache_expired = now - self.updated_last_time >= self.config.cache_ttl;
@@ -95,7 +102,7 @@ impl App {
                 "expired" => Err(AppError::InvalidToken("expired".into()))?,
                 _ => todo!(),
             },
-            _ => todo!(),
+            Err(e) => bail!("failed to verify api token: {:?}", e),
         }
     }
 

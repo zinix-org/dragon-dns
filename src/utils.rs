@@ -23,10 +23,13 @@ pub fn format_duration(duration: &Duration) -> String {
 }
 
 pub async fn get_ip4() -> Result<Ipv4Addr> {
-    let ip4 = reqwest::get("https://checkip.amazonaws.com/")
+    let ip4 = reqwest::Client::new()
+        .get("https://checkip.amazonaws.com")
+        .timeout(std::time::Duration::from_secs(10))
+        .send()
         .await?
         .text()
         .await?;
-    let ip4 = ip4.as_str().trim().parse()?;
+    let ip4 = ip4.trim().parse()?;
     Ok(ip4)
 }
